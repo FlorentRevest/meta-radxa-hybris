@@ -8,7 +8,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=d7810fab7487fb0aad327b76f1be7cd7"
 
 SRC_URI = "git://git.us.linux-rockchip.org/rk3188_r-box_android4.2.2_sdk.git;branch=radxa/radxa-dev"
 SRCREV = "${AUTOREV}"
-LINUX_VERSION ?= "3.4"
+LINUX_VERSION ?= "3.0.36+"
 LINUX_VERSION_EXTENSION ?= "-radxa-hybris"
 
 PR = "r1"
@@ -19,6 +19,9 @@ S = "${WORKDIR}/git/kernel"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/files-jb:"
 SRC_URI += "file://defconfig"
+SRC_URI += "file://extract-headers.sh"
+SRC_URI[md5sum] = "cf648a3ee9682b34d681352a7b3c95cc"
+SRC_URI[sha256sum] = "e797b5ae862e94e5eee19b04b904206cb44b43b89a156e6824e2b21203bfaf94"
 
 PROVIDES += "virtual/android-system-image"
 PROVIDES += "virtual/android-headers"
@@ -36,9 +39,25 @@ do_compile_append() {
 do_install_append() {
     oe_runmake headers_install INSTALL_HDR_PATH=${D}${exec_prefix}/src/linux-${KERNEL_VERSION} ARCH=$ARCH
     cd ..
-    install -d ${D}/system/
-    install -d out/target/product/rk31sdk/system ${D}/system/
+    cp -r out/target/product/rk31sdk/system ${D}/system/
+    rm -rf ${D}/system/app ${D}/system/fonts ${D}/system/framework ${D}/system/media ${D}/system/preinstall ${D}/system/priv-app ${D}/system/tts
+
+    install -d ${D}${includedir}/android
+    ../extract-headers.sh . ${D}${includedir}/android 4 2 2
+
+    install -d ${D}${libdir}/pkgconfig
+    install -m 0644 ${D}${includedir}/android/android-headers.pc ${D}${libdir}/pkgconfig
+    rm ${D}${includedir}/android/android-headers.pc
 }
 
-PACKAGES =+ "kernel-headers"
+do_populate_sysroot_append() {
+    oe.path.copyhardlinktree(d.expand("${D}${includedir}/android"), d.expand("${SYSROOT_DESTDIR}${includedir}/android"))
+}
+
+do_package_qa() {
+}
+
+PACKAGES =+ "kernel-headers android-system android-headers"
 FILES_kernel-headers = "${exec_prefix}/src/linux*"
+FILES_android-system = "/system"
+FILES_android-headers = "${libdir}/pkgconfig ${includedir}/android"
