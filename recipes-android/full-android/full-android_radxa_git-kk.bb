@@ -15,10 +15,12 @@ PV = "${LINUX_VERSION}+kitkat"
 
 COMPATIBLE_MACHINE = "radxa-hybris"
 S = "${WORKDIR}/radxa_rock_android4-4/kernel"
+B = "${WORKDIR}/radxa_rock_android4-4/kernel"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/files-kk:"
 SRC_URI += "file://defconfig"
 SRC_URI += "file://extract-headers.sh"
+SRC_URI += "file://bionic-hybris-kitkat.patch-android"
 SRC_URI[md5sum] = "cf648a3ee9682b34d681352a7b3c95cc"
 SRC_URI[sha256sum] = "e797b5ae862e94e5eee19b04b904206cb44b43b89a156e6824e2b21203bfaf94"
 
@@ -36,9 +38,13 @@ do_configure_prepend() {
 }
 
 do_compile_append() {
-    oe_runmake kernel.img
+    export CROSS_COMPILE=${WORKDIR}/radxa_rock_android4-4/prebuilts/gcc/linux-x86/arm/arm-eabi-4.7/bin/arm-eabi-
+    unset LDFLAGS
+    make rk3188_radxa_rock_kitkat_defconfig
+    make kernel.img
     cd ..
     bash -c '
+    patch -N -d bionic -p1 < ../bionic-hybris-kitkat.patch-android
     . build/envsetup.sh
     lunch radxa_rock-eng '
     oe_runmake

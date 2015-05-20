@@ -6,7 +6,7 @@ HOMEPAGE = "http://git.linux-rockchip.org/"
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://COPYING;md5=d7810fab7487fb0aad327b76f1be7cd7"
 
-SRC_URI = "git://git.us.linux-rockchip.org/rk3188_r-box_android4.2.2_sdk.git;branch=radxa/radxa-dev"
+SRC_URI = "git://git.jp.linux-rockchip.org/rk3188_r-box_android4.2.2_sdk.git;branch=radxa/radxa-dev;protocol=http"
 SRCREV = "${AUTOREV}"
 LINUX_VERSION ?= "3.0.36+"
 LINUX_VERSION_EXTENSION ?= "-radxa-hybris"
@@ -16,10 +16,12 @@ PV = "${LINUX_VERSION}+git${SRCPV}"
 
 COMPATIBLE_MACHINE = "radxa-hybris"
 S = "${WORKDIR}/git/kernel"
+B = "${WORKDIR}/git/kernel"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/files-jb:"
 SRC_URI += "file://defconfig"
 SRC_URI += "file://extract-headers.sh"
+SRC_URI += "file://bionic-hybris-jellybean.patch-android"
 SRC_URI[md5sum] = "cf648a3ee9682b34d681352a7b3c95cc"
 SRC_URI[sha256sum] = "e797b5ae862e94e5eee19b04b904206cb44b43b89a156e6824e2b21203bfaf94"
 
@@ -28,9 +30,13 @@ PROVIDES += "virtual/android-headers"
 PROVIDES += "virtual/kernel"
 
 do_compile_append() {
-    oe_runmake kernel.img
+    export CROSS_COMPILE=${WORKDIR}/git/prebuilts/gcc/linux-x86/arm/arm-eabi-4.7/bin/arm-eabi-
+    unset LDFLAGS
+    make rk3188_radxa_rock_defconfig
+    make kernel.img
     cd ..
     bash -c '
+    patch -d bionic -p1 < ../bionic-hybris-jellybean.patch-android
     . build/envsetup.sh
     lunch rk31sdk-eng '
     oe_runmake

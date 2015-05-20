@@ -1,0 +1,199 @@
+
+
+From aadc28531b12ecf0c76f930eacebbd8d45830553 Mon Sep 17 00:00:00 2001
+From: Carsten Munk <carsten.munk@gmail.com>
+Date: Wed, 10 Apr 2013 19:26:20 +0000
+Subject: [PATCH] Libhybris enablement patch
+
+Signed-off-by: Carsten Munk <carsten.munk@gmail.com>
+
+diff --git a/libc/Android.mk b/libc/Android.mk
+index cb7268e..21642ea 100644
+--- a/libc/Android.mk
++++ b/libc/Android.mk
+@@ -248,7 +248,6 @@ libc_common_src_files := \
+ 	tzcode/localtime.c \
+ 	tzcode/strftime.c \
+ 	tzcode/strptime.c \
+-	bionic/__set_errno.c \
+ 	bionic/cpuacct.c \
+ 	bionic/arc4random.c \
+ 	bionic/basename.c \
+@@ -676,6 +675,7 @@ include $(CLEAR_VARS)
+ LOCAL_SRC_FILES := \
+ 	$(libc_arch_static_src_files) \
+ 	$(libc_static_common_src_files) \
++	bionic/__set_errno.c \
+ 	bionic/libc_init_static.c
+ 
+ LOCAL_C_INCLUDES := $(libc_common_c_includes)
+@@ -688,6 +688,33 @@ LOCAL_SYSTEM_SHARED_LIBRARIES :=
+ 
+ include $(BUILD_STATIC_LIBRARY)
+ 
++# ========================================================
++# libdsyscalls.so
++# ========================================================
++include $(CLEAR_VARS)
++
++LOCAL_SRC_FILES := \
++	$(libc_arch_static_src_files) \
++	$(libc_static_common_src_files) \
++	bionic/dlmalloc.c \
++	bionic/malloc_debug_common.c \
++	bionic/__set_errno.c \
++	hybris/libdsyscalls.c
++
++LOCAL_C_INCLUDES := $(libc_common_c_includes)
++LOCAL_CFLAGS := $(libc_common_cflags)
++
++LOCAL_MODULE:= libdsyscalls
++
++LOCAL_SHARED_LIBRARIES := libdl
++LOCAL_WHOLE_STATIC_LIBRARIES := libc_common
++LOCAL_SYSTEM_SHARED_LIBRARIES :=
++
++LOCAL_LDFLAGS := -Wl,--exclude-libs=libgcc.a
++
++LOCAL_MODULE_TAGS := optional
++
++include $(BUILD_SHARED_LIBRARY)
+ 
+ # ========================================================
+ # libc.a
+@@ -697,6 +724,7 @@ include $(CLEAR_VARS)
+ LOCAL_SRC_FILES := \
+ 	$(libc_arch_static_src_files) \
+ 	$(libc_static_common_src_files) \
++	bionic/__set_errno.c \
+ 	bionic/dlmalloc.c \
+ 	bionic/malloc_debug_common.c \
+ 	bionic/libc_init_static.c
+@@ -722,6 +750,7 @@ LOCAL_C_INCLUDES := $(libc_common_c_includes)
+ LOCAL_SRC_FILES := \
+ 	$(libc_arch_dynamic_src_files) \
+ 	$(libc_static_common_src_files) \
++	bionic/__set_errno.c \
+ 	bionic/dlmalloc.c \
+ 	bionic/malloc_debug_common.c \
+ 	bionic/libc_init_dynamic.c
+@@ -736,7 +765,7 @@ LOCAL_MODULE:= libc
+ # create an "cloaked" dependency on libgcc.a in libc though the libraries, which is not what
+ # you wanted!
+ 
+-LOCAL_SHARED_LIBRARIES := libdl
++LOCAL_SHARED_LIBRARIES := libdl libdsyscalls
+ LOCAL_WHOLE_STATIC_LIBRARIES := libc_common
+ LOCAL_SYSTEM_SHARED_LIBRARIES :=
+ 
+@@ -797,6 +826,7 @@ LOCAL_MODULE:= libc_malloc_debug_qemu
+ LOCAL_SHARED_LIBRARIES := libc
+ LOCAL_WHOLE_STATIC_LIBRARIES := libc_common
+ LOCAL_SYSTEM_SHARED_LIBRARIES :=
++LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
+ 
+ # Don't install on release build
+ LOCAL_MODULE_TAGS := eng debug
+diff --git a/libc/bionic/__set_errno.c b/libc/bionic/__set_errno.c
+index 163d404..f204cd3 100644
+--- a/libc/bionic/__set_errno.c
++++ b/libc/bionic/__set_errno.c
+@@ -29,11 +29,13 @@
+ #include <errno.h>
+ 
+ 
++#ifdef LIBC_STATIC
+ int __set_errno(int n)
+ {
+     errno = n;
+     return -1;
+ }
++#endif
+ 
+ /*
+  * this function is called from syscall stubs,
+diff --git a/libc/bionic/logd_write.c b/libc/bionic/logd_write.c
+index 2bc39fa..3eb230d 100644
+--- a/libc/bionic/logd_write.c
++++ b/libc/bionic/logd_write.c
+@@ -41,10 +41,10 @@
+ #include "logd.h"
+ 
+ /* should match system/core/include/cutils/logger.h */
+-#define LOGGER_LOG_MAIN     "log/main"
+-#define LOGGER_LOG_RADIO    "log/radio"
+-#define LOGGER_LOG_EVENTS   "log/events"
+-#define LOGGER_LOG_SYSTEM   "log/system"
++#define LOGGER_LOG_MAIN     "alog/main"
++#define LOGGER_LOG_RADIO    "alog/radio"
++#define LOGGER_LOG_EVENTS   "alog/events"
++#define LOGGER_LOG_SYSTEM   "alog/system"
+ 
+ #include <pthread.h>
+ 
+diff --git a/libc/hybris/libdsyscalls.c b/libc/hybris/libdsyscalls.c
+new file mode 100644
+index 0000000..9effe1b
+--- /dev/null
++++ b/libc/hybris/libdsyscalls.c
+@@ -0,0 +1,26 @@
++/*
++ * Copyright (C) 2007 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include <errno.h>
++
++/* Define __set_errno here so it can be hijacked by libhybris
++ * at runtime (called from __set_syscall_errno)
++ */
++int __set_errno(int n)
++{
++    errno = n;
++    return -1;
++}
+diff --git a/libc/private/bionic_tls.h b/libc/private/bionic_tls.h
+index 008fd2f..28831d1 100644
+--- a/libc/private/bionic_tls.h
++++ b/libc/private/bionic_tls.h
+@@ -55,10 +55,10 @@ __BEGIN_DECLS
+ /* Well known TLS slots */
+ #define TLS_SLOT_SELF               0
+ #define TLS_SLOT_THREAD_ID          1
+-#define TLS_SLOT_ERRNO              2
++#define TLS_SLOT_ERRNO              5
+ 
+-#define TLS_SLOT_OPENGL_API         3
+-#define TLS_SLOT_OPENGL             4
++#define TLS_SLOT_OPENGL_API         6
++#define TLS_SLOT_OPENGL             7
+ 
+ /* this slot is only used to pass information from the dynamic linker to
+  * libc.so when the C library is loaded in to memory. The C runtime init
+diff --git a/linker/linker_format.c b/linker/linker_format.c
+index 0c68a0b..fa92b77 100644
+--- a/linker/linker_format.c
++++ b/linker/linker_format.c
+@@ -270,7 +270,7 @@ static int log_vprint(int prio, const char *tag, const char *fmt, va_list  args)
+     result = vformat_buffer(buf, sizeof buf, fmt, args);
+ 
+     if (log_fd < 0) {
+-        log_fd = open("/dev/log/main", O_WRONLY);
++        log_fd = open("/dev/alog/main", O_WRONLY);
+         if (log_fd < 0)
+             return result;
+     }
+-- 
+1.7.0.4
+

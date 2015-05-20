@@ -1,0 +1,216 @@
+diff --git a/libc/Android.mk b/libc/Android.mk
+index 9610c14..435074e 100644
+--- a/libc/Android.mk
++++ b/libc/Android.mk
+@@ -231,7 +231,6 @@ libc_bionic_src_files := \
+     bionic/sbrk.cpp \
+     bionic/scandir.cpp \
+     bionic/sched_getaffinity.cpp \
+-    bionic/__set_errno.cpp \
+     bionic/setlocale.cpp \
+     bionic/signalfd.cpp \
+     bionic/sigwait.cpp \
+@@ -830,6 +829,7 @@ include $(CLEAR_VARS)
+ LOCAL_SRC_FILES := \
+ 	$(libc_arch_static_src_files) \
+ 	$(libc_static_common_src_files) \
++	bionic/__set_errno.cpp \
+ 	bionic/libc_init_static.cpp
+ 
+ LOCAL_C_INCLUDES := $(libc_common_c_includes)
+@@ -844,6 +844,34 @@ LOCAL_SYSTEM_SHARED_LIBRARIES :=
+ 
+ include $(BUILD_STATIC_LIBRARY)
+ 
++# ========================================================
++# libdsyscalls.so
++# ========================================================
++include $(CLEAR_VARS)
++
++LOCAL_SRC_FILES := \
++	$(libc_arch_static_src_files) \
++	$(libc_static_common_src_files) \
++	bionic/dlmalloc.c \
++	bionic/malloc_debug_common.cpp \
++	bionic/__set_errno.cpp \
++	hybris/libdsyscalls.cpp
++
++LOCAL_C_INCLUDES := $(libc_common_c_includes)
++LOCAL_CFLAGS := $(libc_common_cflags)
++
++LOCAL_MODULE:= libdsyscalls
++
++LOCAL_SHARED_LIBRARIES := libdl
++LOCAL_WHOLE_STATIC_LIBRARIES := libc_common
++LOCAL_SYSTEM_SHARED_LIBRARIES :=
++
++LOCAL_LDFLAGS := -Wl,--exclude-libs=libgcc.a
++
++LOCAL_MODULE_TAGS := optional
++
++include $(BUILD_SHARED_LIBRARY)
++
+ 
+ # ========================================================
+ # libc.a
+@@ -853,6 +881,7 @@ include $(CLEAR_VARS)
+ LOCAL_SRC_FILES := \
+ 	$(libc_arch_static_src_files) \
+ 	$(libc_static_common_src_files) \
++	bionic/__set_errno.cpp \
+ 	bionic/dlmalloc.c \
+ 	bionic/malloc_debug_common.cpp \
+ 	bionic/libc_init_static.cpp
+@@ -886,6 +915,7 @@ LOCAL_C_INCLUDES := $(libc_common_c_includes)
+ LOCAL_SRC_FILES := \
+ 	$(libc_arch_dynamic_src_files) \
+ 	$(libc_static_common_src_files) \
++	bionic/__set_errno.cpp  \
+ 	bionic/dlmalloc.c \
+ 	bionic/malloc_debug_common.cpp \
+ 	bionic/pthread_debug.cpp \
+@@ -914,7 +944,7 @@ LOCAL_REQUIRED_MODULES := tzdata
+ # create an "cloaked" dependency on libgcc.a in libc though the libraries, which is not what
+ # you wanted!
+ 
+-LOCAL_SHARED_LIBRARIES := libdl
++LOCAL_SHARED_LIBRARIES := libdl libdsyscalls
+ LOCAL_WHOLE_STATIC_LIBRARIES := libc_common
+ LOCAL_SYSTEM_SHARED_LIBRARIES :=
+ 
+@@ -980,14 +1010,15 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+ LOCAL_SHARED_LIBRARIES := libc libdl
+ LOCAL_WHOLE_STATIC_LIBRARIES := libc_common
+ LOCAL_SYSTEM_SHARED_LIBRARIES :=
++LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
+ 
+ # Don't install on release build
+ LOCAL_MODULE_TAGS := eng debug
+ 
+ include $(BUILD_SHARED_LIBRARY)
+ 
+-endif	#!user
+ 
++endif	#!user
+ 
+ # ========================================================
+ include $(call all-makefiles-under,$(LOCAL_PATH))
+diff --git a/libc/bionic/__set_errno.cpp b/libc/bionic/__set_errno.cpp
+index af6a68e..e6ddcac 100644
+--- a/libc/bionic/__set_errno.cpp
++++ b/libc/bionic/__set_errno.cpp
+@@ -32,7 +32,9 @@
+ // C/C++ code should just assign 'errno' instead.
+ 
+ // TODO: this should be __LIBC_HIDDEN__ but was exposed in <errno.h> in the NDK.
++#ifdef LIBC_STATIC
+ extern "C" int __set_errno(int n) {
+   errno = n;
+   return -1;
+ }
++#endif
+diff --git a/libc/bionic/libc_init_dynamic.cpp b/libc/bionic/libc_init_dynamic.cpp
+index 88e87a7..3d5687b 100644
+--- a/libc/bionic/libc_init_dynamic.cpp
++++ b/libc/bionic/libc_init_dynamic.cpp
+@@ -80,7 +80,7 @@ __attribute__((constructor)) static void __libc_preinit() {
+   malloc_debug_init();
+ }
+ 
+-__LIBC_HIDDEN__ void __libc_postfini() {
++void __libc_postfini() { 
+   // A hook for the debug malloc library to let it know that we're shutting down.
+   malloc_debug_fini();
+ }
+diff --git a/libc/bionic/libc_logging.cpp b/libc/bionic/libc_logging.cpp
+index 6bf7415..c5e6762 100644
+--- a/libc/bionic/libc_logging.cpp
++++ b/libc/bionic/libc_logging.cpp
+@@ -420,7 +420,7 @@ int __libc_format_fd(int fd, const char* format, ...) {
+ }
+ 
+ static int __libc_write_log(int priority, const char* tag, const char* msg) {
+-  int main_log_fd = TEMP_FAILURE_RETRY(open("/dev/log/main", O_CLOEXEC | O_WRONLY));
++  int main_log_fd = TEMP_FAILURE_RETRY(open("/dev/alog/main", O_CLOEXEC | O_WRONLY));
+   if (main_log_fd == -1) {
+     return -1;
+   }
+@@ -462,7 +462,7 @@ static int __libc_android_log_event(int32_t tag, char type, const void* payload,
+   vec[2].iov_base = const_cast<void*>(payload);
+   vec[2].iov_len = len;
+ 
+-  int event_log_fd = TEMP_FAILURE_RETRY(open("/dev/log/events", O_CLOEXEC | O_WRONLY));
++  int event_log_fd = TEMP_FAILURE_RETRY(open("/dev/alog/events", O_CLOEXEC | O_WRONLY));
+   if (event_log_fd == -1) {
+     return -1;
+   }
+diff --git a/libc/private/bionic_tls.h b/libc/private/bionic_tls.h
+index d15b1ca..f4691ca 100644
+--- a/libc/private/bionic_tls.h
++++ b/libc/private/bionic_tls.h
+@@ -47,12 +47,12 @@ __BEGIN_DECLS
+ enum {
+   TLS_SLOT_SELF = 0, /* The kernel requires this specific slot for x86. */
+   TLS_SLOT_THREAD_ID,
+-  TLS_SLOT_ERRNO,
++  TLS_SLOT_ERRNO = 7,
+ 
+   /* These two aren't used by bionic itself, but allow the graphics code to
+    * access TLS directly rather than using the pthread API. */
+-  TLS_SLOT_OPENGL_API = 3,
+-  TLS_SLOT_OPENGL = 4,
++  TLS_SLOT_OPENGL_API = 8,
++  TLS_SLOT_OPENGL = 9,
+ 
+   /* This slot is only used to pass information from the dynamic linker to
+    * libc.so when the C library is loaded in to memory. The C runtime init
+@@ -61,9 +61,9 @@ enum {
+   TLS_SLOT_BIONIC_PREINIT = TLS_SLOT_OPENGL_API,
+ 
+   TLS_SLOT_STACK_GUARD = 5, /* GCC requires this specific slot for x86. */
+-  TLS_SLOT_DLERROR,
++  TLS_SLOT_DLERROR = 6,
+ 
+-  TLS_SLOT_FIRST_USER_SLOT /* Must come last! */
++  TLS_SLOT_FIRST_USER_SLOT = 10 /* Must come last! */
+ };
+
+ /*
+diff --git a/libc/hybris/libdsyscalls.cpp b/libc/hybris/libdsyscalls.cpp
+new file mode 100644
+index 0000000..2d2f593
+--- /dev/null
++++ b/libc/hybris/libdsyscalls.cpp
+@@ -0,0 +1,31 @@
++/*
++ * Copyright (C) 2007 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include <errno.h>
++
++/* Define __set_errno here so it can be hijacked by libhybris
++ * at runtime (called from __set_syscall_errno)
++ */
++extern "C" int __set_errno(int n)
++{
++    errno = n;
++    return -1;
++}
++
++// XXX fix a build issue
++__LIBC_HIDDEN__ void __libc_postfini(void)
++{
++}
+
