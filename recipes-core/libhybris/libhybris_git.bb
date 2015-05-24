@@ -16,7 +16,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 # We need the android headers which are now provided for compatiblity reasons as external
 # component. The android-headers are specific for the environment the android-system-image
 # is build with and can differ between different machines.
-DEPENDS += "virtual/android-headers"
+DEPENDS += "wayland virtual/android-headers"
 
 PROVIDES += "virtual/libgles1 virtual/libgles2 virtual/egl"
 
@@ -34,7 +34,7 @@ COMPATIBLE_MACHINE_x86-64 = "(-)"
 # android-system-image is MACHINE_ARCH
 # RDEPENDS_${PN} += "${VIRTUAL-RUNTIME_android-system-image}"
 
-EXTRA_OECONF = "--with-android-headers=${STAGING_INCDIR}/android"
+EXTRA_OECONF = "--with-android-headers=${STAGING_INCDIR}/android --enable-wayland --with-default-egl-platform=fbdev --enable-trace --enable-debug"
 
 # If you want to enable debugging/tracing functionality add the following to a bbappend
 # EXTRA_OECONF += "--enable-debug --enable-trace"
