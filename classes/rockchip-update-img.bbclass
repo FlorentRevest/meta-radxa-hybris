@@ -6,10 +6,10 @@ inherit image_types
 # This image depends on the rootfs ext4 image
 IMAGE_TYPEDEP_rockchip-update-img = "ext4"
 
-DEPENDS = "mkbootimg-native rockchip-bootloader virtual/kernel"
+DEPENDS = "initrd-radxa mkbootimg-native rockchip-bootloader virtual/kernel"
 
 FIRMWARE_VER  ?= "1.0"
-MANUFACTURER  ?= "NEO-Technologies"
+MANUFACTURER  ?= "Community"
 MACHINE_MODEL ?= "${MACHINE}"
 CMDLINE       ?= "console=ttyFIQ0 root=/dev/block/mtd/by-name/linuxroot rw rootfstype=ext4 rootdelay=1"
 MTDPARTS      ?= "0x00008000@0x00002000(boot),-@0x0000A000(linuxroot)"
