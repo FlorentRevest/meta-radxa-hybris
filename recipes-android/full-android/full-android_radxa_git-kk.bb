@@ -13,6 +13,7 @@ LINUX_VERSION_EXTENSION ?= "-radxa-hybris"
 PR = "r2"
 PV = "${LINUX_VERSION}+kitkat"
 
+INHIBIT_PACKAGE_STRIP = "1"
 COMPATIBLE_MACHINE = "radxa-hybris"
 S = "${WORKDIR}/radxa_rock_android4-4/kernel"
 B = "${WORKDIR}/radxa_rock_android4-4/kernel"
@@ -38,10 +39,7 @@ do_configure_prepend() {
 }
 
 do_compile_append() {
-    export CROSS_COMPILE=${WORKDIR}/radxa_rock_android4-4/prebuilts/gcc/linux-x86/arm/arm-eabi-4.7/bin/arm-eabi-
-    unset LDFLAGS
-    make rk3188_radxa_rock_kitkat_defconfig
-    make kernel.img
+    oe_runmake kernel.img
     cd ..
     bash -c '
     patch -N -d bionic -p1 < ../bionic-hybris-kitkat.patch-android
