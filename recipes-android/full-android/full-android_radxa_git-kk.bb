@@ -29,7 +29,11 @@ PROVIDES += "virtual/android-system-image"
 PROVIDES += "virtual/android-headers"
 PROVIDES += "virtual/kernel"
 
-do_configure_prepend() {
+do_unpack_append() {
+    bb.build.exec_func('do_runme', d)
+}
+
+do_runme() {
     cd ${WORKDIR}/radxa_rock_android4-4/
     if test -f runme.sh ; then
         chmod +x runme.sh
