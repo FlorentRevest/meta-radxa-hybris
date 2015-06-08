@@ -46,9 +46,10 @@ do_compile_append() {
     oe_runmake kernel.img
     cd ..
     bash -c '
-    patch -N -d bionic -p1 < ../bionic-hybris-kitkat.patch-android
     . build/envsetup.sh
     lunch radxa_rock-eng '
+    oe_runmake
+    patch -N -d bionic -p1 < ../bionic-hybris-kitkat.patch-android
     oe_runmake
 }
 
@@ -68,6 +69,7 @@ do_install_append() {
 
 do_populate_sysroot_append() {
     oe.path.copyhardlinktree(d.expand("${D}${includedir}/android"), d.expand("${SYSROOT_DESTDIR}${includedir}/android"))
+    oe.path.copyhardlinktree(d.expand("${D}/usr/lib/pkgconfig"), d.expand("${SYSROOT_DESTDIR}/usr/lib/pkgconfig"))
 }
 
 do_package_qa() {

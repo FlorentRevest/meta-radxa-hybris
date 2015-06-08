@@ -64,6 +64,7 @@ do_install_append() {
 
 do_populate_sysroot_append() {
     oe.path.copyhardlinktree(d.expand("${D}${includedir}/android"), d.expand("${SYSROOT_DESTDIR}${includedir}/android"))
+    oe.path.copyhardlinktree(d.expand("${D}/usr/lib/pkgconfig"), d.expand("${SYSROOT_DESTDIR}/usr/lib/pkgconfig"))
 }
 
 do_package_qa() {
