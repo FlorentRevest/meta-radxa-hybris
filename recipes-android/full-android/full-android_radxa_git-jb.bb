@@ -12,7 +12,7 @@ LINUX_VERSION ?= "3.0.36+"
 LINUX_VERSION_EXTENSION ?= "-radxa-hybris"
 
 PR = "r1"
-PV = "${LINUX_VERSION}+git${SRCPV}"
+PV = "${LINUX_VERSION}+jellybean"
 
 INHIBIT_PACKAGE_STRIP = "1"
 COMPATIBLE_MACHINE = "radxa-hybris"
@@ -34,10 +34,18 @@ do_compile_append() {
     oe_runmake kernel.img
     cd ..
     bash -c '
-    patch -d bionic -p1 < ../bionic-hybris-jellybean.patch-android
     . build/envsetup.sh
     lunch rk31sdk-eng '
     oe_runmake
+    #patch -d bionic -p1 < ../bionic-hybris-jellybean.patch-android
+    #oe_runmake
+}
+
+do_install_prepend() {
+    # Dummy Makefile so the make target "clean _mrproper_scripts" from kernel.bbclass works.
+    # This is required since the release "daisy".
+    install -d arch/arm/plat-rk/rk_pm_tests
+    touch arch/arm/plat-rk/rk_pm_tests/Makefile
 }
 
 do_install_append() {
