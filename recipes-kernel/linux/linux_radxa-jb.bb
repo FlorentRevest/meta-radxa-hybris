@@ -10,6 +10,7 @@ SRC_URI = "git://git.jp.linux-rockchip.org/rk3188_r-box_android4.2.2_sdk.git;bra
 SRCREV = "${AUTOREV}"
 LINUX_VERSION ?= "3.0.36+"
 PV = "${LINUX_VERSION}_jellybean"
+DEPENDS += "initrd-radxa"
 
 COMPATIBLE_MACHINE = "radxa-rock"
 S = "${WORKDIR}/git/kernel"

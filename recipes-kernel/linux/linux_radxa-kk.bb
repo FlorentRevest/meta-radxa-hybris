@@ -9,6 +9,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=d7810fab7487fb0aad327b76f1be7cd7"
 SRC_URI = "http://dl.radxa.com/rock_pro/source/radxa_rock_android4-4_141219.tar.gz"
 LINUX_VERSION ?= "3.0.36+"
 PV = "${LINUX_VERSION}_kitkat"
+DEPENDS += " initrd-radxa "
 
 COMPATIBLE_MACHINE = "radxa-rock"
 S = "${WORKDIR}/radxa_rock_android4-4/kernel"
