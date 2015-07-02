@@ -48,7 +48,3 @@ do_install() {
     install -m 0644 ${D}${includedir}/android/android-headers.pc ${D}${libdir}/pkgconfig
     rm ${D}${includedir}/android/android-headers.pc
 }
-
-PACKAGES =+ "android-system android-headers"
-FILES_android-system = "/system"
-FILES_android-headers = "${libdir}/pkgconfig ${includedir}/android"
