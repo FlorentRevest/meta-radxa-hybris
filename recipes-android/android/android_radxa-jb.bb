@@ -33,6 +33,8 @@ do_compile() {
     . build/envsetup.sh
     lunch rk31sdk-eng '
     oe_runmake
+
+    # It seems not to be needed
     # patch -d bionic -p1 < ../bionic-hybris-jellybean-patch
     # oe_runmake
 }
@@ -47,4 +49,13 @@ do_install() {
     install -d ${D}${libdir}/pkgconfig
     install -m 0644 ${D}${includedir}/android/android-headers.pc ${D}${libdir}/pkgconfig
     rm ${D}${includedir}/android/android-headers.pc
+
+    sed -i "s/rk31sdk/rk30board/g" /${D}/system/build.prop
+    install -d ${D}/lib/modules/3.0.36+/
+    install -d ${D}/etc/modules-load.d/
+    ln -s ../../../system/lib/modules/ump.ko.3.0.36+  ${D}/lib/modules/3.0.36+/ump.ko
+    ln -s ../../../system/lib/modules/mali.ko.3.0.36+ ${D}/lib/modules/3.0.36+/mali.ko
+    echo -e "ump\nmali\n" > ${D}/etc/modules-load.d/mali-android.conf
 }
+
+FILES_${PN} = "/system ${libdir}/pkgconfig ${includedir}/android /etc /lib"
