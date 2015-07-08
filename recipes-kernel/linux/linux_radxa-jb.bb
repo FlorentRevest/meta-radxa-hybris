@@ -21,10 +21,6 @@ SRC_URI += "file://defconfig"
 SRC_URI[md5sum] = "cf648a3ee9682b34d681352a7b3c95cc"
 SRC_URI[sha256sum] = "e797b5ae862e94e5eee19b04b904206cb44b43b89a156e6824e2b21203bfaf94"
 
-# do_compile_append() {
-#     oe_runmake kernel.img
-# }
-
 do_install_prepend() {
     # Dummy Makefile so the make target "clean _mrproper_scripts" from kernel.bbclass works.
     # This is required since the release "daisy".

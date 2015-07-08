@@ -33,10 +33,6 @@ do_runme() {
     cd kernel
 }
 
-# do_compile_append() {
-#     oe_runmake kernel.img
-# }
-
 do_install_prepend() {
     # Dummy Makefile so the make target "clean _mrproper_scripts" from kernel.bbclass works.
     # This is required since the release "daisy".
