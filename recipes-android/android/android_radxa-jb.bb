@@ -34,9 +34,8 @@ do_compile() {
     lunch rk31sdk-eng '
     oe_runmake
 
-    # It seems not to be needed
-    # patch -d bionic -p1 < ../bionic-hybris-jellybean-patch
-    # oe_runmake
+    patch -d bionic -p1 < ../bionic-hybris-jellybean-patch
+    oe_runmake
 }
 
 do_install() {

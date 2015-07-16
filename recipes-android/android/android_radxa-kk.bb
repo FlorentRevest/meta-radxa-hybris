@@ -44,9 +44,8 @@ do_compile() {
     lunch radxa_rock-eng '
     oe_runmake
 
-    # It seems not to be needed
-    # patch -N -d bionic -p1 < ../bionic-hybris-kitkat-patch
-    # oe_runmake
+    patch -N -d bionic -p1 < ../bionic-hybris-kitkat-patch
+    oe_runmake
 }
 
 do_install() {

@@ -16,9 +16,9 @@ index cb7268e..21642ea 100644
  	tzcode/strftime.c \
  	tzcode/strptime.c \
 -	bionic/__set_errno.c \
+ 	bionic/bionic_clone.c \
  	bionic/cpuacct.c \
  	bionic/arc4random.c \
- 	bionic/basename.c \
 @@ -676,6 +675,7 @@ include $(CLEAR_VARS)
  LOCAL_SRC_FILES := \
  	$(libc_arch_static_src_files) \
@@ -40,7 +40,7 @@ index cb7268e..21642ea 100644
 +	$(libc_arch_static_src_files) \
 +	$(libc_static_common_src_files) \
 +	bionic/dlmalloc.c \
-+	bionic/malloc_debug_common.c \
++	bionic/malloc_debug_common.cpp \
 +	bionic/__set_errno.c \
 +	hybris/libdsyscalls.c
 +
@@ -67,7 +67,7 @@ index cb7268e..21642ea 100644
  	$(libc_static_common_src_files) \
 +	bionic/__set_errno.c \
  	bionic/dlmalloc.c \
- 	bionic/malloc_debug_common.c \
+ 	bionic/malloc_debug_common.cpp \
  	bionic/libc_init_static.c
 @@ -722,6 +750,7 @@ LOCAL_C_INCLUDES := $(libc_common_c_includes)
  LOCAL_SRC_FILES := \
@@ -75,7 +75,7 @@ index cb7268e..21642ea 100644
  	$(libc_static_common_src_files) \
 +	bionic/__set_errno.c \
  	bionic/dlmalloc.c \
- 	bionic/malloc_debug_common.c \
+ 	bionic/malloc_debug_common.cpp \
  	bionic/libc_init_dynamic.c
 @@ -736,7 +765,7 @@ LOCAL_MODULE:= libc
  # create an "cloaked" dependency on libgcc.a in libc though the libraries, which is not what
