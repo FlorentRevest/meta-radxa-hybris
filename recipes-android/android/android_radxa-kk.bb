@@ -9,7 +9,7 @@ SRC_URI = "http://dl.radxa.com/rock_pro/source/radxa_rock_android4-4_141219.tar.
 PV = "kitkat"
 
 INHIBIT_PACKAGE_STRIP = "1"
-COMPATIBLE_MACHINE = "radxa-rock"
+COMPATIBLE_MACHINE = "rk3188-radxarock"
 S = "${WORKDIR}/radxa_rock_android4-4/"
 B = "${S}"
 

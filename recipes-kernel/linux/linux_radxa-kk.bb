@@ -11,7 +11,7 @@ LINUX_VERSION ?= "3.0.36+"
 PV = "${LINUX_VERSION}_kitkat"
 DEPENDS += " initrd-radxa "
 
-COMPATIBLE_MACHINE = "radxa-rock"
+COMPATIBLE_MACHINE = "rk3188-radxarock"
 S = "${WORKDIR}/radxa_rock_android4-4/kernel"
 B = "${S}"
 

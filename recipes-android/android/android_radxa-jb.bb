@@ -10,7 +10,7 @@ SRCREV = "${AUTOREV}"
 PV = "jellybean"
 
 INHIBIT_PACKAGE_STRIP = "1"
-COMPATIBLE_MACHINE = "radxa-rock"
+COMPATIBLE_MACHINE = "rk3188-radxarock"
 S = "${WORKDIR}/git/"
 B = "${S}"
 

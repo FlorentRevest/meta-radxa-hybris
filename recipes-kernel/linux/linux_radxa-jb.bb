@@ -12,7 +12,7 @@ LINUX_VERSION ?= "3.0.36+"
 PV = "${LINUX_VERSION}_jellybean"
 DEPENDS += "initrd-radxa"
 
-COMPATIBLE_MACHINE = "radxa-rock"
+COMPATIBLE_MACHINE = "rk3188-radxarock"
 S = "${WORKDIR}/git/kernel"
 B = "${S}"
 
